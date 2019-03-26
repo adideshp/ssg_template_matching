@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Template Matching</string>
+    <string name="action_settings">Settings</string>
+    <string-array name="numbers">
+        <item>Select a device</item>
+        <item>Two</item>
+        <item>Three</item>
+        <item>Four</item>
+    </string-array>
+    <string name="title_activity_device_detail">DeviceDetailActivity</string>
+    <string name="title_activity_click_template">ClickTemplateActivity</string>
+</resources>
