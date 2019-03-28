@@ -270,7 +270,7 @@ public class DeviceDetailActivity extends AppCompatActivity {
 
     private class Communicate extends AsyncTask<Long, Integer, Void> {
 
-        byte[] image = new byte[20000];
+        byte[] image = new byte[100000];
         int ptr;
 
         @Override

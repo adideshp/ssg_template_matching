@@ -11,9 +11,11 @@ import sensor, image
 import time, utime
 from pyb import UART
 from image import SEARCH_EX, SEARCH_DS
-from pyb import Pin
+from pyb import Pin, LED
 
-pin5 = Pin('P5', Pin.IN, Pin.PULL_UP)
+
+led = LED(3)
+pin7 = Pin('P7', Pin.IN, Pin.PULL_UP)
 
 # Reset sensor
 sensor.reset()
@@ -25,7 +27,7 @@ sensor.set_gainceiling(16)
 sensor.set_framesize(sensor.QQVGA)
 # You can set windowing to reduce the search image.
 #sensor.set_windowing(((640-80)//2, (480-60)//2, 80, 60))
-sensor.set_windowing((50,40))
+#sensor.set_windowing((60,60))
 sensor.set_pixformat(sensor.GRAYSCALE)
 sensor.skip_frames(time = 2000)
 
@@ -53,6 +55,7 @@ def take_snap():
     with open(temp_template_path, mode='rb') as file:
         fileContent = file.read()
         uart.write(fileContent);
+        print(".")
 
 
 def save_snap_as_template():
@@ -67,25 +70,39 @@ def get_stats():
     uart.write("MATCHED: " + str(stats["MATCHED"]) + "\n");
 
 
-functions = {1: view_template, 2: take_snap, 3: save_snap_as_template, 4: get_stats}
+def stop():
+    print("QUIT")
+    quit()
 
+functions = {0: stop, 1: view_template, 2: take_snap, 3: save_snap_as_template, 4: get_stats}
 
-
+"""
 while(True):
-    cmd = uart.readline()
-    if(cmd != None):
-        print("CMD: " + str(int(cmd)))
-        functions[int(cmd)]()
+    sensor.snapshot()"""
 
-    else:
-        object_absent = int(pin5.value())
-        template =  = image.Image(template_path_pgm, copy_to_fb = True)
-        if (object_absent == 0):
-            img = sensor.snapshot()
-            r = img.find_template(template, 0.70, step=4, search=SEARCH_EX) #, roi=(10, 0, 60, 60))
-            if r:
-                stats["MATCHED"] += 1
-            stats["TOTAL"] += 1
+
+#if (int(pin7.value()) == 0):
+if (False):
+    while(True):
+        cmd = uart.readline()
+        if(cmd != None):
+            print("CMD: " + str(int(cmd)))
+            functions[int(cmd)]()
+        """if(int(pin7.value()) == 1):
+            break"""
+else:
+    k = 0
+    template = image.Image(template_path_pgm, copy_to_fb = False)
+    while(True):
+        img = sensor.snapshot()
+        r = img.find_template(template, 0.70, step=4, search=SEARCH_EX)
+        if r:
+            led.on()
+            time.sleep(100)
+            led.off()
+
+
+
 
 
 
