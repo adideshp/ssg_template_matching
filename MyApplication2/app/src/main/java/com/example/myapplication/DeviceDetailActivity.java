@@ -19,6 +19,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -94,8 +95,7 @@ public class DeviceDetailActivity extends AppCompatActivity {
         viewTemplateBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick (View v) {
-                Snackbar.make(v, "You will see the template shortly", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                msg("Loading usually takes 20secs");
                 sendCommand(CMD_VIEW_TEMPLATE);
                 receiveImage();
             }
@@ -104,7 +104,7 @@ public class DeviceDetailActivity extends AppCompatActivity {
         createTemplateBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 viewTemplateBtn.setEnabled(false);
-                Snackbar.make(v, "You will see the click shortly", Snackbar.LENGTH_LONG)
+                Snackbar.make(v, "Loading usually takes 20secs", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 saveTemplate.setEnabled(true);
                 cancel.setEnabled(true);
@@ -156,9 +156,15 @@ public class DeviceDetailActivity extends AppCompatActivity {
     }
 
     private void receiveImage() {
+        new Communicate().execute(new Long(30000));
+    }
+
+    /*
+
+    private void receiveImage() {
         try {
             InputStream is = btSocket.getInputStream();
-            Bitmap output = readInputStreamWithTimeout(is, 5000);
+            Bitmap output = readInputStreamWithTimeout(is, 30000);
             template.setImageBitmap(output);
         } catch (IOException e) {
             e.printStackTrace();
@@ -174,12 +180,15 @@ public class DeviceDetailActivity extends AppCompatActivity {
         int ptr = 0;
         long maxTimeMillis = System.currentTimeMillis() + timeoutMillis;
         while (System.currentTimeMillis() < maxTimeMillis) {
+            msg("Template will take another " + (maxTimeMillis - System.currentTimeMillis()) + "ms");
             int readLength = is.available();
             int res = is.read(image, ptr, readLength);
             ptr = ptr + readLength;
         }
         return BitmapFactory.decodeByteArray(image, 0, ptr);
     }
+
+    */
 
     /*
 
@@ -255,9 +264,52 @@ public class DeviceDetailActivity extends AppCompatActivity {
                 isBtConnected = true;
                 TextView deviceDetail = findViewById(R.id.deviceDetail);
                 deviceDetail.setText(deviceInfo);
-                //ioThread = new ConnectedThread(btSocket);
-                //ioThread.run();  // Starts the thread
             }
+        }
+    }
+
+    private class Communicate extends AsyncTask<Long, Integer, Void> {
+
+        byte[] image = new byte[20000];
+        int ptr;
+
+        @Override
+        protected  void onPreExecute () {
+            progress = ProgressDialog.show(DeviceDetailActivity.this, "Loading image. Will take around 30secs", "Please Wait!!!");
+        }
+
+        @Override
+        protected Void doInBackground(Long... timeoutMillis) {
+            int bufferOffset = 0;
+            int readLength, res;
+            String output = "";
+            ptr = 0;
+            Long maxTimeMillis = System.currentTimeMillis() + timeoutMillis[0];
+            InputStream is = null;
+            try {
+                is = btSocket.getInputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            while (System.currentTimeMillis() < maxTimeMillis) {
+                try {
+                    readLength = is.available();
+                    is.read(image, ptr, readLength);
+                    ptr = ptr + readLength;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+
+
+        @Override
+        protected void onPostExecute (Void result) {
+            super.onPostExecute(result);
+            progress.dismiss();
+            Bitmap img = BitmapFactory.decodeByteArray(image, 0, ptr);
+            template.setImageBitmap(img);
         }
     }
 }
